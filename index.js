@@ -24,6 +24,7 @@ const
     limit       : 'LIMIT',
     tag         : 'TAG',
     tagSep      : 'SEPARATOR',
+    partial     : 'PARTIAL',
 
     // node_redis strings
     multiConstructor
@@ -198,8 +199,19 @@ module.exports = function(clientOrNodeRedis,key,passedOptsOrCb,passedCb) {// Thi
         addArgs   = [docId];                                              // start off the arguments to pass to RediSearch
       
       if (!checked) { clientCheck(); }                                    // bindings check
-        
-      addArgs.push(lastArgs.opts.score || 1, s.fields);                   // Score, if we've got one and then FIELDS
+      
+      const flags = [
+        lastArgs.opts.score || 1,
+        lastArgs.opts.noSave    ? s.noSave    : undefined,
+        lastArgs.opts.replace   ? s.replace   : undefined,
+        lastArgs.opts.partial   ? s.partial   : undefined,
+        lastArgs.opts.noCreate  ? s.noCreate  : undefined,
+      ].filter( flag => flag !== undefined);
+
+      // Add the optional flags and fields tag
+      addArgs.push( ...flags ,s.fields );    
+
+      // Score, if we've got one and then FIELDS
       Object.keys(values).forEach(function(aField) {                      // Get the keys of the passed in plain object then iterate
         addArgs.push(aField,values[aField]);                              // interlace field name / value
       });
